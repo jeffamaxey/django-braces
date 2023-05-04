@@ -111,12 +111,11 @@ class OrderableListMixin:
         """Which direction should things be sorted?"""
         if not self.ordering_default:
             return "asc"
-        else:
-            if self.ordering_default not in ["asc", "desc"]:
-                raise ImproperlyConfigured(
-                    f"{self.__class__.__name__} only allows asc or desc as ordering option"
-                )
-            return self.ordering_default
+        if self.ordering_default not in ["asc", "desc"]:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} only allows asc or desc as ordering option"
+            )
+        return self.ordering_default
 
     def get_ordered_queryset(self, queryset=None):
         """

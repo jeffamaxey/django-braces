@@ -108,7 +108,7 @@ class CustomJsonEncoderView(views.JSONResponseMixin, View):
 
     def get(self, request):
         """Send back some JSON"""
-        object = {"numbers": set([1, 2, 3])}
+        object = {"numbers": {1, 2, 3}}
         return self.render_json_response(object)
 
 
@@ -167,9 +167,11 @@ class JsonCustomBadRequestView(views.JsonRequestResponseMixin, View):
 
     def post(self, request, *args, **kwargs):
         """Handle the POST request"""
-        if not self.request_json:
-            return self.render_bad_request_response({"error": "you messed up"})
-        return self.render_json_response(self.request_json)
+        return (
+            self.render_json_response(self.request_json)
+            if self.request_json
+            else self.render_bad_request_response({"error": "you messed up"})
+        )
 
 
 class CreateArticleView(CreateView):

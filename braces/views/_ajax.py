@@ -46,15 +46,14 @@ class JSONResponseMixin:
         Limited serialization for shipping plain data.
         Do not use for models or other complex objects.
         """
-        response = JsonResponse(
+        return JsonResponse(
             data=context_dict,
             safe=False,
             encoder=self.get_json_encoder_class(),
             json_dumps_params=self.get_json_dumps_kwargs(),
             content_type=self.get_content_type(),
-            status=status
+            status=status,
         )
-        return response
 
     def render_json_object_response(self, objects, **kwargs):
         """

@@ -22,9 +22,8 @@ def parse_dist_meta():
         for line in meta_fh:
             if line.strip() == "# -eof meta-":
                 break
-            match = re_meta.match(line.strip())
-            if match:
-                distmeta.update(_add_default(match))
+            if match := re_meta.match(line.strip()):
+                distmeta |= _add_default(match)
         return distmeta
 
 

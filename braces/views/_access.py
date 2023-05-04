@@ -36,14 +36,13 @@ class AccessMixin:
         """
         Override this method to customize the login_url.
         """
-        login_url = self.login_url or settings.LOGIN_URL
-        if not login_url:
+        if login_url := self.login_url or settings.LOGIN_URL:
+            return force_str(login_url)
+        else:
             raise ImproperlyConfigured(
                 f"Define {self._class_name}.login_url or settings.LOGIN_URL or "
                 f"override {self._class_name}.get_login_url()."
             )
-
-        return force_str(login_url)
 
     def get_redirect_field_name(self):
         """
@@ -65,16 +64,15 @@ class AccessMixin:
                 and not request.user.is_authenticated
             ):
                 return self.no_permissions_fail(request)
-            else:
-                if inspect.isclass(self.raise_exception) and issubclass(
-                    self.raise_exception, Exception
-                ):
-                    raise self.raise_exception
-                if callable(self.raise_exception):
-                    ret = self.raise_exception(request)
-                    if isinstance(ret, (HttpResponse, StreamingHttpResponse)):
-                        return ret
-                raise PermissionDenied
+            if inspect.isclass(self.raise_exception) and issubclass(
+                self.raise_exception, Exception
+            ):
+                raise self.raise_exception
+            if callable(self.raise_exception):
+                ret = self.raise_exception(request)
+                if isinstance(ret, (HttpResponse, StreamingHttpResponse)):
+                    return ret
+            raise PermissionDenied
 
         return self.no_permissions_fail(request)
 
@@ -104,10 +102,11 @@ class LoginRequiredMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
         """Call the appropriate method after checking authentication"""
-        if not request.user.is_authenticated:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if request.user.is_authenticated
+            else self.handle_no_permission(request)
+        )
 
 
 class AnonymousRequiredMixin(AccessMixin):
@@ -218,10 +217,11 @@ class PermissionRequiredMixin(AccessMixin):
         """
         has_permission = self.check_permissions(request)
 
-        if not has_permission:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if has_permission
+            else self.handle_no_permission(request)
+        )
 
 
 class MultiplePermissionsRequiredMixin(PermissionRequiredMixin):
@@ -281,11 +281,8 @@ class MultiplePermissionsRequiredMixin(PermissionRequiredMixin):
         self._check_perms_keys("any", perms_any)
 
         # Check that user has all permissions in the list/tuple
-        if perms_all:
-            # Why not `return request.user.has_perms(perms_all)`?
-            # There may be optional permissions below.
-            if not request.user.has_perms(perms_all):
-                return False
+        if perms_all and not request.user.has_perms(perms_all):
+            return False
 
         # If perms_any, check that user has at least one in the list/tuple
         if perms_any:
@@ -362,10 +359,11 @@ class GroupRequiredMixin(AccessMixin):
         if request.user.is_authenticated:
             in_group = self.check_membership(self.get_group_required())
 
-        if not in_group:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if in_group
+            else self.handle_no_permission(request)
+        )
 
 
 class UserPassesTestMixin(AccessMixin):
@@ -395,10 +393,11 @@ class UserPassesTestMixin(AccessMixin):
         """Call the appropriate handler if the users passes the test"""
         user_test_result = self.get_test_func()(request.user)
 
-        if not user_test_result:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if user_test_result
+            else self.handle_no_permission(request)
+        )
 
 
 class SuperuserRequiredMixin(AccessMixin):
@@ -408,10 +407,11 @@ class SuperuserRequiredMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
         """Call the appropriate handler if the user is a superuser"""
-        if not request.user.is_superuser:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if request.user.is_superuser
+            else self.handle_no_permission(request)
+        )
 
 
 class StaffuserRequiredMixin(AccessMixin):
@@ -421,10 +421,11 @@ class StaffuserRequiredMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
         """Call the appropriate handler if the user is a staff member"""
-        if not request.user.is_staff:
-            return self.handle_no_permission(request)
-
-        return super().dispatch(request, *args, **kwargs)
+        return (
+            super().dispatch(request, *args, **kwargs)
+            if request.user.is_staff
+            else self.handle_no_permission(request)
+        )
 
 
 class SSLRequiredMixin:

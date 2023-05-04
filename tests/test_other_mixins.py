@@ -453,8 +453,7 @@ class MessageMixinTests(test.TestCase):
         """
         # This test is designed to break when django.contrib.messages.api
         # changes (items being added or removed).
-        excluded_API = set()
-        excluded_API.add("MessageFailure")
+        excluded_API = {"MessageFailure"}
 
 
 class TestFormMessageMixins(test.TestCase):

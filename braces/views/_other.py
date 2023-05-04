@@ -86,8 +86,6 @@ class CanonicalSlugDetailMixin:
         match = resolve(request.path_info)
         url_parts = match.namespaces
         url_parts.append(match.url_name)
-        current_urlpattern = ":".join(url_parts)
-
         # Find the canonical slug for the object
         if hasattr(obj, "get_canonical_slug"):
             canonical_slug = obj.get_canonical_slug()
@@ -101,6 +99,8 @@ class CanonicalSlugDetailMixin:
                 self.slug_url_kwarg: canonical_slug,
                 "permanent": True,
             }
+            current_urlpattern = ":".join(url_parts)
+
             return redirect(current_urlpattern, **params)
 
         return super().dispatch(request, *args, **kwargs)
